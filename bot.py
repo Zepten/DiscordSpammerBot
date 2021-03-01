@@ -1,14 +1,10 @@
-import inspect
-from os import error
-from discord import message
-from discord.ext.commands.core import command
-from discord.flags import Intents
 import config
 import ipcalc
 import hello
 
 import discord
 from discord.ext import commands
+import requests
 import random
 
 # Права для бота
@@ -180,15 +176,40 @@ async def music(ctx):
 # Рандомная цитата из ОРД цитатника
 @bot.command()
 async def ord(ctx):
-    await ctx.send('Команда `-ord` в разработке :tools:')
+    url = requests.get(
+        'https://api.vk.com/method/wall.get',
+        params = {
+            'owner_id': config.GROUP_ID, 'count': 1, 'offset': 0,
+            'access_token': config.VK_TOKEN, 'v': '5.130'
+        }
+    )
+    post_count = url.json()['response']['count']
+    url = requests.get(
+        'https://api.vk.com/method/wall.get',
+        params = {
+            'owner_id': config.GROUP_ID, 'count': 1,
+            'offset': random.randint(0, post_count - 1),
+            'access_token': config.VK_TOKEN, 'v': '5.130'
+        }
+    )
+    content = url.json()['response']['items'][0]['text']
+    emb = discord.Embed(
+        title = '"' + content + '"',
+        description = '© ОРД Цитатник',
+    )
+    emb.color = discord.Color.from_rgb(255, 100, 100)
+    await ctx.send(embed=emb)
 
 @ord.error
 async def ord_error(ctx, error):
-    return
+    await ctx.send(':grimacing: Упс... Какая-то ошибка... Не могу показать цитату...')
     
 @help.command()
 async def ord(ctx):
-    await ctx.send('Команда `-help ord` в разработке :tools:')
+    emb = discord.Embed(title='Ord :scroll:', 
+        description='Я покажу тебе отборную цитату из самого классного паблика **"ОРД Цитатник"**')
+    emb.add_field(name='Синтаксис', value='`-ord`')
+    await ctx.send(embed=emb)
 
 # Время на сервере
 @bot.command()
@@ -209,4 +230,4 @@ async def time(ctx):
 #     print(f'"{ctx.command.name}" was invoked.')
 
 # Запуск бота
-bot.run(config.TOKEN)
+bot.run(config.BOT_TOKEN)
