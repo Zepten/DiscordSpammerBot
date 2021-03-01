@@ -1,5 +1,7 @@
 import inspect
 from os import error
+from discord import message
+from discord.ext.commands.core import command
 from discord.flags import Intents
 import config
 import ipcalc
@@ -28,11 +30,19 @@ async def on_command_error(ctx, error):
 # Help
 @bot.group(invoke_without_command=True)
 async def help(ctx):
-    emb = discord.Embed(title=':face_with_monocle: Для любопытных',
-        description='Напиши `-help <имя команды>` для более подробной информации')
+    emb = discord.Embed(
+        title=':face_with_monocle: Список команд (для любопытных)',
+        description='Напиши `-help <имя команды>` для более подробной информации'
+    )
     emb.add_field(name='hi :wave:', value='Поздороваться')
-    emb.add_field(name='anon :detective:', value='Сказать что-то от моего имени')
+    emb.add_field(name='anon :detective:', value=f'Сказать что-то\nот моего имени')
     emb.add_field(name='ip :computer:', value='IP-калькулятор')
+    emb.add_field(name='dice :game_die:', value='Бросить кубики')
+    emb.add_field(name='roulette :gun:', value='Русская рулетка')
+    emb.add_field(name='vote :white_check_mark:', value='Голосование')
+    emb.add_field(name='music :musical_note:', value='Музыкальные команды')
+    emb.add_field(name='ord :scroll:', value='Рандомная цитата\nиз ОРД цитатника')
+    emb.add_field(name='time :alarm_clock:', value='Время на сервере')
     await ctx.send(embed=emb)
 
 # Поздороваться
@@ -114,6 +124,85 @@ async def ip(ctx):
     emb.add_field(name='Че это такое', value='<ip-адрес> состоит из **4** байт (чисел от 0 до 255), разделенных точкой *(пример: 192.169.0.1)*.\n<номер маски> - это число от 0 до 32.', inline=False)
     emb.add_field(name='Фишки', value='В IP-адрес ты можешь записать меньше 4-х чисел, тогда все остальные я заполню нулями.\nТакже все числа я привожу к диапазону от 0 до 255 *(для IP)* или от 0 до 32 *(для номера маски)*.\nИными словами, ты можешь написать `-ip 999.999.999.999 999`, а я восприму это как `-ip 255.255.255.255 32`.', inline=False)
     await ctx.send(embed=emb)
+
+# Бросить кубики
+@bot.command()
+async def dice(ctx):
+    await ctx.send('Команда `-dice` в разработке :tools:')
+    
+@dice.error
+async def dice_error(ctx, error):
+    return
+    
+@help.command()
+async def dice(ctx):
+    await ctx.send('Команда `-help dice` в разработке :tools:')
+
+# Русская рулетка
+@bot.command()
+async def roulette(ctx):
+    await ctx.send('Команда `-roulette` в разработке :tools:')
+
+@roulette.error
+async def roulette_error(ctx, error):
+    return
+    
+@help.command()
+async def roulette(ctx):
+    await ctx.send('Команда `-help roulette` в разработке :tools:')
+
+# Голосование
+@bot.command()
+async def vote(ctx):
+    await ctx.send('Команда `-vote` в разработке :tools:')
+
+@vote.error
+async def vote_error(ctx, error):
+    return
+    
+@help.command()
+async def vote(ctx):
+    await ctx.send('Команда `-help vote` в разработке :tools:')
+
+# Музыкальные команды
+@bot.command()
+async def music(ctx):
+    await ctx.send('Команда `-music` в разработке :tools:')
+
+@music.error
+async def music_error(ctx, error):
+    return
+    
+@help.command()
+async def music(ctx):
+    await ctx.send('Команда `-help music` в разработке :tools:')
+
+# Рандомная цитата из ОРД цитатника
+@bot.command()
+async def ord(ctx):
+    await ctx.send('Команда `-ord` в разработке :tools:')
+
+@ord.error
+async def ord_error(ctx, error):
+    return
+    
+@help.command()
+async def ord(ctx):
+    await ctx.send('Команда `-help ord` в разработке :tools:')
+
+# Время на сервере
+@bot.command()
+async def time(ctx):
+    await ctx.send('Команда `-time` в разработке :tools:')
+
+@time.error
+async def time_error(ctx, error):
+    return
+    
+@help.command()
+async def time(ctx):
+    await ctx.send('Команда `-time ord` в разработке :tools:')
+
 
 # @bot.event
 # async def on_command(ctx):
