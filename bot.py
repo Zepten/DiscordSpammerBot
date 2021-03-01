@@ -1,26 +1,29 @@
+import inspect
+from os import error
 from discord.flags import Intents
 import config
 import ipcalc
 import hello
 
-import typing
-from discord import message
 import discord
 from discord.ext import commands
-from discord import Embed
-from discord.ext.commands import Bot
-from asyncio import sleep
 import random
 
 # Права для бота
 intents = discord.Intents().all()
-bot = commands.Bot(command_prefix=config.PREFIX, intents=intents)
+bot = commands.Bot(command_prefix=config.PREFIX, intents=intents, case_insensitive=True)
 bot.remove_command('help')
 
 # Готовность бота к работе
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} is ready!')
+
+# Не найдена команда
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send(f'{ctx.message.author.mention}, не понял, о чем ты. :confused: Напиши `-help`, если сам не понял')
 
 # Help
 @bot.group(invoke_without_command=True)
@@ -41,41 +44,80 @@ async def hi(ctx):
 @help.command()
 async def hi(ctx):
     emb = discord.Embed(title='Hi :wave:', 
-        description='Поздороваюсь с тобой на всех языках мира по твоему желанию.\nЯ вообще все сделаю по твоему желанию :flushed:')
-    emb.add_field(name='Синтаксис', value='-hi')
+        description='Поздороваюсь с тобой по твоему желанию.\nЯ вообще все сделаю по твоему желанию :flushed:')
+    emb.add_field(name='Синтаксис', value='`-hi`')
     await ctx.send(embed=emb)
 
 # Сказать от имени бота
 @bot.command()
 async def anon(ctx, *, arg):
     await ctx.message.delete()
-    await ctx.send(arg)
+    await ctx.send('**Кто-то сказал:** '+arg)
+
+@anon.error
+async def anon_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f':clap: Поздравляю, {ctx.message.author.mention} ты спалился. *Надо сообщение написать, а не просто `-anon`*')
 
 @help.command()
 async def anon(ctx):
     emb = discord.Embed(title='Anon :detective:', 
         description='Ты вводишь сообщение, а я делаю так, чтобы никто не узнал о том, что это написал именно ты\n*P.S.: Я ничего не гарантирую :grin:*')
-    emb.add_field(name='Синтаксис', value='-anon <сообщение>')
+    emb.add_field(name='Синтаксис', value='`-anon <сообщение>`')
     await ctx.send(embed=emb)
 
 # IP-калькулятор
-@bot.command()
-async def ip(ctx, *arg):
-    if len(arg) == 2:
-        await ctx.send(ipcalc.calculate(arg[0], arg[1]))
-    elif len(arg) == 1:
-        await ctx.send('Допиши `<номер маски>`, а то я хз, что с этим делать)')
-    elif len(arg) == 0:
-        await ctx.send('Гайд как ввести команду **ip**: ```-ip <ip-адрес> <номер маски>```')
-    elif len(arg) > 2:
-        await ctx.send('В глаза долбишься? Надо только 2 аргумента.')
+@bot.command(ignore_extra=False)
+async def ip(ctx, ip: str, bitmask: int):
+    # Парсинг IP
+    try:
+        ip = list(map(int, ip.split('.')))
+    except:
+        await ctx.send(f'{ctx.message.author.mention}, че за бред? :face_with_raised_eyebrow: У тебя в IP-адресе какая-то неразбериха')
+        return
+    if len(ip) > 4:
+        await ctx.send(f'{ctx.message.author.mention}, IP-адрес состоит из **4** байт, а у тебя написано явно побольше')
+        return
+    while len(ip) < 4:
+        ip.append(0)
+    
+    # Клэмпинг IP
+    ip = [max(0, min(i, 255)) for i in ip]
+
+    # Клэмпинг номера маски
+    bitmask = max(0, min(bitmask, 32))
+
+    text = f'{ctx.message.author.mention}, готово :thumbsup:\n'
+    text += ipcalc.calculate(ip, bitmask)
+
+    await ctx.send(text)
+
+@ip.error
+async def ip_error(ctx, error):
+    if isinstance(error, commands.TooManyArguments):
+        await ctx.send(f'{ctx.message.author.mention}, :face_with_raised_eyebrow: Че-то многовато всего... Обратись-ка в `-help ip`')
+        return
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f'{ctx.message.author.mention}, чего-то не хватает. :face_with_raised_eyebrow: Обратись-ка в `-help ip`')
+        return
+    if isinstance(error, commands.BadArgument):
+        await ctx.send(f'{ctx.message.author.mention}, номер маски - это число, но видимо ты другого мнения')
+        return
 
 @help.command()
 async def ip(ctx):
-    emb = discord.Embed(title='IP :computer:', 
-        description='Хз, зачем Паша его сюда вставил, мб больше нечего :cry:')
-    emb.add_field(name='Синтаксис', value='-ip <ip-адрес> <номер маски>')
+    emb = discord.Embed(
+        title='IP :computer:',
+        description='IP-калькулятор. Хз, зачем Паша его сюда вставил, мб больше нечего :cry:',
+    )
+    emb.add_field(name='Синтаксис', value='`-ip <ip-адрес> <номер маски>`', inline=False)
+    emb.add_field(name='Че это такое', value='<ip-адрес> состоит из **4** байт (чисел от 0 до 255), разделенных точкой *(пример: 192.169.0.1)*.\n<номер маски> - это число от 0 до 32.', inline=False)
+    emb.add_field(name='Фишки', value='В IP-адрес ты можешь записать меньше 4-х чисел, тогда все остальные я заполню нулями.\nТакже все числа я привожу к диапазону от 0 до 255 *(для IP)* или от 0 до 32 *(для номера маски)*.\nИными словами, ты можешь написать `-ip 999.999.999.999 999`, а я восприму это как `-ip 255.255.255.255 32`.', inline=False)
     await ctx.send(embed=emb)
+
+# @bot.event
+# async def on_command(ctx):
+#     print(f'"{ctx.command.name}" was invoked.')
 
 # Запуск бота
 bot.run(config.TOKEN)

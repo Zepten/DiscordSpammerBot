@@ -1,4 +1,5 @@
 import os
 
-TOKEN = os.environ.get('BOT_TOKEN') # Токен
-PREFIX = "-"                        # Префикс
+TOKEN = os.environ.get('BOT_TOKEN')
+
+PREFIX = "-"
