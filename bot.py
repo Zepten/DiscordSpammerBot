@@ -9,7 +9,7 @@ import random
 
 # Права для бота
 intents = discord.Intents().all()
-bot = commands.Bot(command_prefix=config.PREFIX, intents=intents, case_insensitive=True)
+bot = commands.Bot(command_prefix='-', intents=intents, case_insensitive=True)
 bot.remove_command('help')
 
 # Готовность бота к работе
@@ -123,16 +123,31 @@ async def ip(ctx):
 
 # Бросить кубики
 @bot.command()
-async def dice(ctx):
-    await ctx.send('Команда `-dice` в разработке :tools:')
+async def dice(ctx, n: int = 6):
+    egg = random.random() <= 0.05
+    if n == 6:
+        title = 'Детка, я холодный кубик' if egg else 'Бросаю кубик'
+    else:
+        n = max(2, n)
+        title = f'Детка, я холодный кубик с {n} гранями' if egg else f'Бросаю кубик с {n} гранями'
+    emb = discord.Embed(
+        title = title,
+        description = f':game_die: **{random.randint(1, n)}**'
+    )
+    await ctx.send(embed=emb)
     
 @dice.error
 async def dice_error(ctx, error):
-    return
+    await ctx.send(f'{ctx.message.author.mention}, я не понял, сколько граней у кубика :game_die:')
     
 @help.command()
 async def dice(ctx):
-    await ctx.send('Команда `-help dice` в разработке :tools:')
+    emb = discord.Embed(
+        title='Dice :game_die:',
+        description='Кидаю кубик и говорю, что выпало. Можно настраивать количество граней'
+    )
+    emb.add_field(name='Синтаксис', value='`-dice`\n`-dice <количество граней>`')
+    await ctx.send(embed=emb)
 
 # Русская рулетка
 @bot.command()
@@ -225,10 +240,10 @@ async def time_error(ctx, error):
 async def time(ctx):
     await ctx.send('Команда `-time ord` в разработке :tools:')
 
-
-# @bot.event
-# async def on_command(ctx):
-#     print(f'"{ctx.command.name}" was invoked.')
+# Лог в консоль
+@bot.event
+async def on_command(ctx):
+    print(f'"{ctx.command.name}" was invoked.')
 
 # Запуск бота
 bot.run(config.BOT_TOKEN)
