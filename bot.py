@@ -195,8 +195,9 @@ async def ord(ctx):
     content = url.json()['response']['items'][0]['text']
     emb = discord.Embed(
         title = '"' + content + '"',
-        description = '© ОРД Цитатник',
+        description = '© ОРД Цитатник'
     )
+    emb.set_thumbnail(url='https://d.radikal.ru/d33/2103/21/2c590a3e5b91.jpg')
     emb.color = discord.Color.from_rgb(255, 100, 100)
     await ctx.send(embed=emb)
 
