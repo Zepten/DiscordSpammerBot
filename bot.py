@@ -7,26 +7,33 @@ from discord.embeds import Embed
 from bs4 import BeautifulSoup
 import requests
 import random
-from datetime import time
 
 import ipcalc
 import hello
 
-# Получение токенов из Heroku
+# Получение токенов и URL'ов из Heroku
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 VK_TOKEN = os.environ.get('VK_TOKEN')
 GROUP_ID = os.environ.get('GROUP_ID')
+URL34 = os.environ.get('URL34')
 
-# Попытка получения токенов из локального файла
+# Попытка получения токенов и URL'ов из локального файла (для отладки)
 try:
     with open('config.json') as config_file:
         config = json.load(config_file)
         BOT_TOKEN = config['BOT_TOKEN']
         VK_TOKEN = config['VK_TOKEN']
         GROUP_ID = config['GROUP_ID']
-        print('I got all tokens from config.json!')
+        URL34 = config['URL34']
+        print("I got all tokens and URL's from config.json!")
 except:
     print("I can not find config.json file!")
+
+# Заголовки
+HEADERS = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.111 YaBrowser/21.2.1.107 Yowser/2.5 Safari/537.36', 
+    'accept': '*/*'
+}
 
 # Права для бота
 intents = discord.Intents().all()
@@ -307,6 +314,47 @@ async def stat(ctx):
     )
     emb.add_field(name='Синтаксис', value='`-stat <ник, либо упоминание>`\n`-stat`')
     await ctx.send(embed=emb)
+
+@bot.command()
+async def r34(ctx, *, tags: str = '*'):
+    def get_random_posts(url):
+        respond_for_img = requests.get(url=url, headers=HEADERS)
+        bs = BeautifulSoup(respond_for_img.text, 'html.parser')
+        return bs.posts
+    
+    def get_any_random_post_url(url):
+        resp = requests.get(url=url, headers=HEADERS)
+        bs = BeautifulSoup(resp.text, 'html.parser')
+        post_id = bs.title.string.split()[-1]
+        post_url = URL34+'page=dapi&s=post&q=index&id='+post_id
+        return post_url
+    
+    if tags == '*':
+        post_url = get_any_random_post_url(URL34+'page=post&s=random')
+        post = get_random_posts(post_url).post
+        image_url = post['file_url'] # Image URL
+        post_id = post['id'] # Post ID
+    else:
+        posts_count = get_random_posts(URL34+'page=dapi&s=post&q=index&limit=1&tags='+tags)['count'] # Posts count
+        post_pid = random.randint(0, int(posts_count) - 1) # Post PID
+        post = get_random_posts(URL34+'page=dapi&s=post&q=index&limit=1&pid='+str(post_pid)+'&tags='+tags).post # Post object
+        image_url = post['file_url'] # Image URL
+        post_id = post['id'] # Post ID
+    
+    emb = Embed()
+    if tags != '*':
+        emb.title='Rule34: '+tags
+        emb.description = f'Количество постов с этим тэгом: **{posts_count}**\n'
+    else:
+        emb.title='Rule34: случайный пост'
+    emb.set_author(name=f'ID: {post_id}', url=f'{URL34}page=post&s=view&id={post_id}')
+    emb.set_image(url=image_url)
+    emb.set_footer(text='Тэги: '+post['tags'])
+    await ctx.send(embed=emb)
+
+@r34.error
+async def r34(ctx, error):
+    await ctx.send(':sob: Не могу найти такой пост...')
 
 # Запуск бота
 bot.run(BOT_TOKEN)
