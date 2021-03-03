@@ -9,11 +9,11 @@ def calculate(ip, bitmask):
         else:
             return '.'.join(map(str, l))
     
-    output = '```pas'
+    output = '```prolog'
 
     # Print parsed and clamped parameters
     output += '\n'
-    output += 'IP-адрес:'.ljust(T) + dot_sep(ip) + '\n'
+    output += 'Адрес:'.ljust(T) + dot_sep(ip) + '\n'
     output += 'Номер маски:'.ljust(T) + str(bitmask) + '\n'
 
     # Netmask

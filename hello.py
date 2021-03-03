@@ -1,4 +1,22 @@
 hello_word = [
-'Привет', 'Здорова', 'Здравствуй', 'Салам алейкум', 'Моё почтение', 'Hello', 'Приветствую',
+    'Hoy', 'Horas', '喂', 'Ալլո', 'Kamusta', 'Hyvää päivää', 'Malo', 'Čao', 'Sälü', 'Bonswa', 
+    'Nozvezh vat', 'Здравейте', 'Szervusz', '今日は', 'Hej', '汝好', 'もしもし', 'Ave', 'ەيلو', 'Здравствуйте', 
+    'Байна', '爾好', 'Halò', 'ສະບາຍດີ', 'مرحبًا', 'Grüß gott', 'Kumusta', 'Сәлем', 'Selamat', 'ألسّلام عليكم', 
+    'Aqui', 'Buongiorno', 'أهلاً بيك', 'Здравствуй', 'Selamat siang', 'Terve', '儂好', 'Dav', 'Сәлеметсіздер', 'Namaste', 
+    'Привет', 'Živjo', 'السلام عليكم', 'สวัสดี', 'Moïen', 'Ciào', 'Алло', 'Coi', 'Bula uro', 'Haai', 
+    'नमस्ते', 'وعليكم السّلام', 'Olá', 'Xin chào', '您好', 'Bonġu', 'Bog', 'و عليكم السلام', 'Sawubona', 'Tēriņtš', 
+    'السلام علیکم', 'নমস্কার', 'Bon die', 'Hey', 'لسلام علیکم', 'שלום', 'Shwmae', 'Iyi günler', 'Zdrávej', 'Chào anh', 
+    'Merhaba', 'Bonjour', 'வணக்கம்', 'Mauri', 'Kaixo', 'Tere', 'سلام', 'Hæ', 'Γειά σας', 'ਸਤਿ ਸ਼੍ਰੀ ਅਕਾਲ', 
+    'Hoi', 'გამარჯობა', 'مرحبا', 'Բարև', 'สวัสดีค่ะ', 'Сайн байна уу', 'Glidis', '안녕', 'Kumustá', 'Χαίρε', 
+    'Zdrávejte', 'Szervusztok', 'Салам Алейкум', 'Nomoskar', 'أهلاً وسهلاً', 'Grüzi', 'Γειά σου', 'Halla', 'Здравей', 'Բարև ձեզ', 
+    '안녕하세요', 'Shalom', 'Selamat datong', 'Hujambo', 'Ellohay', 'こんにちは', 'Hai', 'Halo', 'Ni hao', 'Sveiki', 
+    '안녕하십니까', 'おっす', 'Mirëdita', 'Szia', 'Сайн уу', 'Aloha', 'Здорово', 'أهلاً', 'Labas', 'אַ גוטן טאָג', 
+    'Moi', 'Сайн', 'Χαίρετε', 'Tungjatjeta', 'Hutch-e-lul-lul-o', 'Ало', 'Sziasztok', 'آداب', 'Салам', 'Salve', 
+    'Ekii', 'Sekoh', 'Zdravo', 'Góðan dag', 'Hejsa', 'Salvete', 'ᐊᐃᓐᖓᐃ', 'Hallo', 'Здраво', 'Nazdar', 
+    'Avete', 'Bondjoû', 'Kwe', 'Alii', 'Dobrý den', 'Bok', 'Ola', 'Saluton', 'Høj', 'Gamardžoba', 
+    'Γειά', 'Salut', 'Привіт', 'Cześć', 'Chào', 'Sannu', 'Ćao', 'Nyob zoo', 'Chào chị', 'Bongu', 
+    '!kao', 'Mushi mushi', 'Sal', '你好', 'สวัสดีครับ', 'Экии', 'Sveikas', 'Bula', 'Bunã ziua', 'ᐊᐃ', 
+    'Moro', 'Kanichi wa', 'Hallå', 'Hei', 'Halló', 'Tugjatjeta', 'Moikka', 'Ћао', 'नमस्कार', 'Jambo', 
+    'سلام علیکم', "C'kemi", 'آلو', 'Salutamu', 'ฮัลโหล', 'Namaskāram', 'Hola', 'Salute', 'Parev', "Y´'át'ééh", 
+    'Aang', 'Ahoj', 'Ողջույն', 'Добрый день', 'Χαίρε και υγίαινε', 'Talofa', 'Selam', 'Ciao', 'Bouônjour'
 ]
-

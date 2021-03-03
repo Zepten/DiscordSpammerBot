@@ -1,11 +1,32 @@
-import config
+import os
+import json
+import discord
+from discord.ext import commands
+from discord import member
+from discord.embeds import Embed
+from bs4 import BeautifulSoup
+import requests
+import random
+from datetime import datetime
+
 import ipcalc
 import hello
 
-import discord
-from discord.ext import commands
-import requests
-import random
+# Получение токенов из Heroku
+BOT_TOKEN = os.environ.get('BOT_TOKEN')
+VK_TOKEN = os.environ.get('VK_TOKEN')
+GROUP_ID = os.environ.get('GROUP_ID')
+
+# Попытка получения токенов из локального файла
+try:
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+        BOT_TOKEN = config['BOT_TOKEN']
+        VK_TOKEN = config['VK_TOKEN']
+        GROUP_ID = config['GROUP_ID']
+        print('I got all tokens from config.json!')
+except:
+    print("I can not find config.json file!")
 
 # Права для бота
 intents = discord.Intents().all()
@@ -15,31 +36,46 @@ bot.remove_command('help')
 # Готовность бота к работе
 @bot.event
 async def on_ready():
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='-help'))
     print(f'{bot.user.name} is ready!')
 
 # Не найдена команда
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send(f'{ctx.message.author.mention}, не понял, о чем ты. :confused: Напиши `-help`, если сам не понял')
+        await ctx.send(f'{ctx.message.author.mention}, я не знаю такой команды. :rolling_eyes: Обратись в `-help`')
+
+# Лог в консоль
+@bot.event
+async def on_command(ctx):
+    print(f'"{ctx.command.name}" was invoked.')
+
+# Ping
+@bot.command()
+async def ping(ctx):
+    await ctx.send(f'Мой пинг: {round(bot.latency * 1000)}мс')
 
 # Help
-@bot.group(invoke_without_command=True)
+@bot.group(invoke_without_command=True, ignore_extra=False)
 async def help(ctx):
-    emb = discord.Embed(
+    emb = Embed(
         title=':face_with_monocle: Список команд (для любопытных)',
         description='Напиши `-help <имя команды>` для более подробной информации'
     )
-    emb.add_field(name='hi :wave:', value='Поздороваться')
-    emb.add_field(name='anon :detective:', value=f'Сказать что-то\nот моего имени')
-    emb.add_field(name='ip :computer:', value='IP-калькулятор')
-    emb.add_field(name='dice :game_die:', value='Бросить кубики')
-    emb.add_field(name='roulette :gun:', value='Русская рулетка')
-    emb.add_field(name='vote :white_check_mark:', value='Голосование')
-    emb.add_field(name='music :musical_note:', value='Музыкальные команды')
-    emb.add_field(name='ord :scroll:', value='Рандомная цитата\nиз ОРД цитатника')
-    emb.add_field(name='time :alarm_clock:', value='Время на сервере')
+    emb.add_field(name='-hi :wave:', value='Поздороваться')
+    emb.add_field(name='-anon :detective:', value=f'Анонимизатор')
+    emb.add_field(name='-ip :computer:', value='IP-калькулятор')
+    emb.add_field(name='-dice :game_die:', value='Бросить кубик')
+    emb.add_field(name='-roulette :gun:', value='Русская рулетка')
+    emb.add_field(name='-vote :white_check_mark:', value='Голосование')
+    emb.add_field(name='-music :musical_note:', value='Музыкальные команды')
+    emb.add_field(name='-ord :scroll:', value='Рандомная цитата\nиз ОРД цитатника')
+    emb.add_field(name='-stat :bar_chart:', value='Статистика пользователя')
     await ctx.send(embed=emb)
+
+@help.error
+async def help_error(ctx, error):
+    await ctx.send(f'{ctx.message.author.mention}, не понял, о чем ты. :confused: Напиши `-help`, если сам не понял')
 
 # Поздороваться
 @bot.command()
@@ -49,8 +85,8 @@ async def hi(ctx):
 
 @help.command()
 async def hi(ctx):
-    emb = discord.Embed(title='Hi :wave:', 
-        description='Поздороваюсь с тобой по твоему желанию.\nЯ вообще все сделаю по твоему желанию :flushed:')
+    emb = Embed(title='Hi :wave:', 
+        description='**Поздороваться**\nПоздороваюсь с тобой на каком-нибудь языке.\nЯ вообще все сделаю по твоему желанию :flushed:')
     emb.add_field(name='Синтаксис', value='`-hi`')
     await ctx.send(embed=emb)
 
@@ -67,8 +103,8 @@ async def anon_error(ctx, error):
 
 @help.command()
 async def anon(ctx):
-    emb = discord.Embed(title='Anon :detective:', 
-        description='Ты вводишь сообщение, а я делаю так, чтобы никто не узнал о том, что это написал именно ты\n*P.S.: Я ничего не гарантирую :grin:*')
+    emb = Embed(title='Anon :detective:', 
+        description='**Анонимизатор**\nТы вводишь сообщение, а я делаю так, чтобы никто не узнал о том, что это написал именно ты\n*P.S.: Я ничего не гарантирую :grin:*')
     emb.add_field(name='Синтаксис', value='`-anon <сообщение>`')
     await ctx.send(embed=emb)
 
@@ -112,9 +148,9 @@ async def ip_error(ctx, error):
 
 @help.command()
 async def ip(ctx):
-    emb = discord.Embed(
+    emb = Embed(
         title='IP :computer:',
-        description='IP-калькулятор. Хз, зачем Паша его сюда вставил, мб больше нечего :cry:',
+        description='**IP-калькулятор**\nХз, зачем Паша его сюда вставил, мб больше нечего :cry:',
     )
     emb.add_field(name='Синтаксис', value='`-ip <ip-адрес> <номер маски>`', inline=False)
     emb.add_field(name='Че это такое', value='<ip-адрес> состоит из **4** байт (чисел от 0 до 255), разделенных точкой *(пример: 192.169.0.1)*.\n<номер маски> - это число от 0 до 32.', inline=False)
@@ -123,28 +159,34 @@ async def ip(ctx):
 
 # Бросить кубики
 @bot.command()
-async def dice(ctx, n: int = 6):
+async def dice(ctx, n: str = '6'):
+    if n == 'game':
+        await ctx.send('https://youtu.be/SshZVDtWLdU')
+        return
+    else:
+        try:
+            n = int(n)
+        except:
+            await ctx.send(f'{ctx.message.author.mention}, я не понял, сколько граней у кубика :game_die:')
+            return
+    
     egg = random.random() <= 0.05
     if n == 6:
         title = 'Детка, я холодный кубик' if egg else 'Бросаю кубик'
     else:
         n = max(2, n)
         title = f'Детка, я холодный кубик с {n} гранями' if egg else f'Бросаю кубик с {n} гранями'
-    emb = discord.Embed(
+    emb = Embed(
         title = title,
         description = f':game_die: **{random.randint(1, n)}**'
     )
     await ctx.send(embed=emb)
     
-@dice.error
-async def dice_error(ctx, error):
-    await ctx.send(f'{ctx.message.author.mention}, я не понял, сколько граней у кубика :game_die:')
-    
 @help.command()
 async def dice(ctx):
-    emb = discord.Embed(
+    emb = Embed(
         title='Dice :game_die:',
-        description='Кидаю кубик и говорю, что выпало. Можно настраивать количество граней'
+        description='**Бросить кубик**\nКидаю кубик и говорю, что выпало. Можно настраивать количество граней'
     )
     emb.add_field(name='Синтаксис', value='`-dice`\n`-dice <количество граней>`')
     await ctx.send(embed=emb)
@@ -191,24 +233,25 @@ async def music(ctx):
 # Рандомная цитата из ОРД цитатника
 @bot.command()
 async def ord(ctx):
-    url = requests.get(
+    response = requests.get(
         'https://api.vk.com/method/wall.get',
         params = {
-            'owner_id': config.GROUP_ID, 'count': 1, 'offset': 0,
-            'access_token': config.VK_TOKEN, 'v': '5.130'
+            'owner_id': GROUP_ID, 'count': 1, 'offset': 0,
+            'access_token': VK_TOKEN, 'v': '5.130'
         }
     )
-    post_count = url.json()['response']['count']
-    url = requests.get(
+    post_count = response.json()['response']['count']
+    response = requests.get(
         'https://api.vk.com/method/wall.get',
         params = {
-            'owner_id': config.GROUP_ID, 'count': 1,
+            'owner_id': GROUP_ID, 'count': 1,
             'offset': random.randint(0, post_count - 1),
-            'access_token': config.VK_TOKEN, 'v': '5.130'
+            'access_token': VK_TOKEN, 'v': '5.130'
         }
     )
-    content = url.json()['response']['items'][0]['text']
-    emb = discord.Embed(
+    content = response.json()['response']['items'][0]['text']
+
+    emb = Embed(
         title = '"' + content + '"',
         description = '© ОРД Цитатник'
     )
@@ -222,28 +265,40 @@ async def ord_error(ctx, error):
     
 @help.command()
 async def ord(ctx):
-    emb = discord.Embed(title='Ord :scroll:', 
-        description='Я покажу тебе отборную цитату из самого классного паблика **"ОРД Цитатник"**')
+    emb = Embed(title='Ord :scroll:', 
+        description='**Рандомная цитата из ОРД цитатника**\nЯ покажу тебе отборную цитату из самого классного паблика **"ОРД Цитатник"**')
     emb.add_field(name='Синтаксис', value='`-ord`')
     await ctx.send(embed=emb)
 
-# Время на сервере
+# Статистика
 @bot.command()
-async def time(ctx):
-    await ctx.send('Команда `-time` в разработке :tools:')
+async def stat(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.message.author
+    emb = Embed(
+        title=f'Статистика пользователя {member.name}', description=member.mention, color=discord.Color.gold()
+    )
+    emb.set_thumbnail(url=member.avatar_url)
+    emb.add_field(name='ID пользователя', value=member.id, inline=True)
+    emb.add_field(name='Топ роль', value=member.top_role.mention, inline=True)
+    emb.add_field(name='На сервере с', value=member.joined_at.strftime('%d.%m.%Y'), inline=False)
+    # emb.add_field(name='Опыт:', value=100, inline=True)
+    # emb.add_field(name='Уровень:', value=1, inline=True)
+    emb.set_footer(icon_url=ctx.author.avatar_url, text=f'Поинтересовался {ctx.author.name}')
+    await ctx.send(embed=emb)
 
-@time.error
+@stat.error
 async def time_error(ctx, error):
-    return
-    
-@help.command()
-async def time(ctx):
-    await ctx.send('Команда `-time ord` в разработке :tools:')
+    await ctx.send(f'{ctx.message.author.mention}, надо упомянуть кого-нибудь, либо написать ник')
 
-# Лог в консоль
-@bot.event
-async def on_command(ctx):
-    print(f'"{ctx.command.name}" was invoked.')
+@help.command()
+async def stat(ctx):
+    emb = Embed(
+        title='Stat :bar_chart:',
+        description=f'**Статистика пользователя**\nПоказываю ID, топ роль и дату подключения на сервер.\nМожно написать чей-нибудь ник, либо упомянуть кого-нибудь (например, меня), либо просто написать `-stat` и получить информацию о себе'
+    )
+    emb.add_field(name='Синтаксис', value='`-stat <ник, либо упоминание>`\n`-stat`')
+    await ctx.send(embed=emb)
 
 # Запуск бота
-bot.run(config.BOT_TOKEN)
+bot.run(BOT_TOKEN)
