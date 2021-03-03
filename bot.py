@@ -7,7 +7,7 @@ from discord.embeds import Embed
 from bs4 import BeautifulSoup
 import requests
 import random
-from datetime import datetime
+from datetime import time
 
 import ipcalc
 import hello
@@ -230,7 +230,7 @@ async def music_error(ctx, error):
 async def music(ctx):
     await ctx.send('Команда `-help music` в разработке :tools:')
 
-# Рандомная цитата из ОРД цитатника
+# Рандомный пост
 @bot.command()
 async def ord(ctx):
     response = requests.get(
@@ -246,17 +246,25 @@ async def ord(ctx):
         params = {
             'owner_id': GROUP_ID, 'count': 1,
             'offset': random.randint(0, post_count - 1),
-            'access_token': VK_TOKEN, 'v': '5.130'
+            'access_token': VK_TOKEN, 'v': '5.130', 'extended': '1'
         }
     )
     content = response.json()['response']['items'][0]['text']
-
     emb = Embed(
         title = '"' + content + '"',
-        description = '© ОРД Цитатник'
+        description = '© ' + response.json()['response']['groups'][0]['name']
     )
-    emb.set_thumbnail(url='https://d.radikal.ru/d33/2103/21/2c590a3e5b91.jpg')
+    attachments = response.json()['response']['items'][0]
+    try:
+        if attachments['attachments'][0]['type'] == 'photo':
+            image = attachments['attachments'][0]['photo']['sizes'][-1]['url']
+            emb.set_image(url=image)
+    except:
+        pass
+    thumbnail = response.json()['response']['groups'][0]['photo_200']
+    emb.set_thumbnail(url=thumbnail)
     emb.color = discord.Color.from_rgb(255, 100, 100)
+
     await ctx.send(embed=emb)
 
 @ord.error
