@@ -2,7 +2,6 @@ import os
 import json
 import discord
 from discord.ext import commands
-from discord import member
 from discord.embeds import Embed
 from bs4 import BeautifulSoup
 import requests
@@ -56,6 +55,17 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_command(ctx):
     print(f'"{ctx.command.name}" was invoked.')
+
+# Очистка сообщений
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def clear(ctx, amount=1):
+    await ctx.channel.purge(limit=amount+1)
+
+@clear.error
+async def clear_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(f'{ctx.message.author.mention}, у тебя нет права очищать сообщения :sob:')
 
 # Ping
 @bot.command()
@@ -237,7 +247,7 @@ async def music_error(ctx, error):
 async def music(ctx):
     await ctx.send('Команда `-help music` в разработке :tools:')
 
-# Рандомный пост
+# Рандомный пост из ОРД
 @bot.command()
 async def ord(ctx):
     response = requests.get(
@@ -315,20 +325,24 @@ async def stat(ctx):
     emb.add_field(name='Синтаксис', value='`-stat <ник, либо упоминание>`\n`-stat`')
     await ctx.send(embed=emb)
 
-@bot.command()
-async def r34(ctx, *, tags: str = '*'):
+def check_is_nsfw(ctx):
+    return ctx.message.channel.is_nsfw()
+
+@bot.command(aliases=['r34', 'rule34', 'r'])
+@commands.check(check_is_nsfw)
+async def rule_34(ctx, *, tags: str = '*'):
     def get_random_posts(url):
         respond_for_img = requests.get(url=url, headers=HEADERS)
         bs = BeautifulSoup(respond_for_img.text, 'html.parser')
         return bs.posts
-    
+
     def get_any_random_post_url(url):
         resp = requests.get(url=url, headers=HEADERS)
         bs = BeautifulSoup(resp.text, 'html.parser')
         post_id = bs.title.string.split()[-1]
         post_url = URL34+'page=dapi&s=post&q=index&id='+post_id
         return post_url
-    
+
     if tags == '*':
         post_url = get_any_random_post_url(URL34+'page=post&s=random')
         post = get_random_posts(post_url).post
@@ -336,11 +350,16 @@ async def r34(ctx, *, tags: str = '*'):
         post_id = post['id'] # Post ID
     else:
         posts_count = get_random_posts(URL34+'page=dapi&s=post&q=index&limit=1&tags='+tags)['count'] # Posts count
-        post_pid = random.randint(0, int(posts_count) - 1) # Post PID
+        try:
+            post_pid = random.randint(0, int(posts_count) - 1) # Post PID
+        except:
+            await ctx.send(':sob: Не могу найти такой пост...')
+            return
         post = get_random_posts(URL34+'page=dapi&s=post&q=index&limit=1&pid='+str(post_pid)+'&tags='+tags).post # Post object
         image_url = post['file_url'] # Image URL
         post_id = post['id'] # Post ID
-    
+
+    print(f'Sending post ID{post_id}')
     emb = Embed()
     if tags != '*':
         emb.title='Rule34: '+tags
@@ -350,11 +369,14 @@ async def r34(ctx, *, tags: str = '*'):
     emb.set_author(name=f'ID: {post_id}', url=f'{URL34}page=post&s=view&id={post_id}')
     emb.set_image(url=image_url)
     emb.set_footer(text='Тэги: '+post['tags'])
+
+    await ctx.message.delete()
     await ctx.send(embed=emb)
 
-@r34.error
-async def r34(ctx, error):
-    await ctx.send(':sob: Не могу найти такой пост...')
+@rule_34.error
+async def rule_34(ctx, error):
+    if not check_is_nsfw(ctx):
+        await ctx.send(':flushed: Нельзя отправлять такое не в NSFW канал...')
 
 # Запуск бота
 bot.run(BOT_TOKEN)

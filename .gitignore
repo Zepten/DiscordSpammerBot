@@ -2,3 +2,4 @@ __pycache__
 config.json
 test.py
 test.html
+.vscode
