@@ -13,7 +13,8 @@ import hello
 # Получение токенов и URL'ов из Heroku
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 VK_TOKEN = os.environ.get('VK_TOKEN')
-GROUP_ID = os.environ.get('GROUP_ID')
+ORD_ID = os.environ.get('ORD_ID')
+ANEK_ID = os.environ.get('ANEK_ID')
 URL34 = os.environ.get('URL34')
 
 # Попытка получения токенов и URL'ов из локального файла (для отладки)
@@ -22,7 +23,8 @@ try:
         config = json.load(config_file)
         BOT_TOKEN = config['BOT_TOKEN']
         VK_TOKEN = config['VK_TOKEN']
-        GROUP_ID = config['GROUP_ID']
+        ORD_ID = config['ORD_ID']
+        ANEK_ID = config['ANEK_ID']
         URL34 = config['URL34']
         print("I got all tokens and URL's from config.json!")
 except:
@@ -88,6 +90,7 @@ async def help(ctx):
     emb.add_field(name='-music :musical_note:', value='Музыкальные команды')
     emb.add_field(name='-ord :scroll:', value='Рандомная цитата\nиз ОРД цитатника')
     emb.add_field(name='-stat :bar_chart:', value='Статистика пользователя')
+    emb.add_field(name='-anek :zany_face:', value='Рандомный анекдот')
     await ctx.send(embed=emb)
 
 @help.error
@@ -253,7 +256,7 @@ async def ord(ctx):
     response = requests.get(
         'https://api.vk.com/method/wall.get',
         params = {
-            'owner_id': GROUP_ID, 'count': 1, 'offset': 0,
+            'owner_id': ORD_ID, 'count': 1, 'offset': 0,
             'access_token': VK_TOKEN, 'v': '5.130'
         }
     )
@@ -261,7 +264,7 @@ async def ord(ctx):
     response = requests.get(
         'https://api.vk.com/method/wall.get',
         params = {
-            'owner_id': GROUP_ID, 'count': 1,
+            'owner_id': ORD_ID, 'count': 1,
             'offset': random.randint(0, post_count - 1),
             'access_token': VK_TOKEN, 'v': '5.130', 'extended': '1'
         }
@@ -327,6 +330,56 @@ async def stat(ctx):
 
 def check_is_nsfw(ctx):
     return ctx.message.channel.is_nsfw()
+
+# Рандомный анекдот
+@bot.command(aliases=['anekdot', 'анек', 'прикол', 'смеяка', 'анекдот', 'ржака'])
+async def anek(ctx):
+    response = requests.get(
+        'https://api.vk.com/method/wall.get',
+        params = {
+            'owner_id': ANEK_ID, 'count': 1, 'offset': 0,
+            'access_token': VK_TOKEN, 'v': '5.130'
+        }
+    )
+    post_count = response.json()['response']['count']
+    response = requests.get(
+        'https://api.vk.com/method/wall.get',
+        params = {
+            'owner_id': ANEK_ID, 'count': 1,
+            'offset': random.randint(0, post_count - 1),
+            'access_token': VK_TOKEN, 'v': '5.130', 'extended': '1'
+        }
+    )
+    content = response.json()['response']['items'][0]['text']
+    emb = Embed(
+        title = content,
+        description = '© ' + response.json()['response']['groups'][0]['name']
+    )
+    attachments = response.json()['response']['items'][0]
+    try:
+        if attachments['attachments'][0]['type'] == 'photo':
+            image = attachments['attachments'][0]['photo']['sizes'][-1]['url']
+            emb.set_image(url=image)
+    except:
+        pass
+    thumbnail = response.json()['response']['groups'][0]['photo_200']
+    emb.set_thumbnail(url=thumbnail)
+    emb.color = discord.Color.from_rgb(22, 185, 247)
+
+    await ctx.send(embed=emb)
+
+@anek.error
+async def ord_error(ctx, error):
+    await ctx.send(':grimacing: Упс... Не смешно... Не могу показать анекдот...')
+
+@help.command()
+async def anek(ctx):
+    emb = Embed(
+        title='Anek :zany_face:',
+        description=f'**Рандомный анекдот**\nРасскажу тебе случайный анекдот из паблика **Анектоды категории Б+**'
+    )
+    emb.add_field(name='Синтаксис', value='`-anek`')
+    await ctx.send(embed=emb)
 
 @bot.command(aliases=['r34', 'rule34', 'r'])
 @commands.check(check_is_nsfw)
